@@ -38,7 +38,7 @@ db.connect(err => {
 
   db.query(`
     INSERT INTO users (username, password)
-    VALUES ('admin', '123')
+    VALUES ('admin', 'test1234567')
   `);
 });
 
