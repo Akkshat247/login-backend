@@ -35,7 +35,7 @@ db.query(`
 /* ➕ INSERT DEFAULT USER (only if not exists) */
 db.query(`
   INSERT INTO users (username, password)
-  SELECT * FROM (SELECT 'admin', '123') AS tmp
+  SELECT * FROM (SELECT 'admin', 'test1234567') AS tmp
   WHERE NOT EXISTS (
     SELECT username FROM users WHERE username='admin'
   ) LIMIT 1;
