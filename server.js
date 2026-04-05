@@ -7,7 +7,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* 🔌 RDS CONNECTION */
 const db = mysql.createConnection({
   host: "login-db-new1.c7oqmwqi0kq2.ca-central-1.rds.amazonaws.com",
   user: "admin",
@@ -15,16 +14,14 @@ const db = mysql.createConnection({
   database: "loginapp"
 });
 
-/* CONNECT + INIT */
 db.connect(err => {
   if (err) {
-    console.error("❌ DB connection failed:", err);
+    console.error("DB connection failed:", err);
     return;
   }
 
-  console.log("✅ Connected to RDS");
+  console.log("Connected to RDS");
 
-  /* CREATE TABLE */
   db.query(`
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -33,20 +30,21 @@ db.connect(err => {
     )
   `);
 
-  /* CLEAN + INSERT USER */
-  db.query("DELETE FROM users");
-
   db.query(`
     INSERT INTO users (username, password)
-    VALUES ('admin', 'test1234567')
+    SELECT * FROM (SELECT 'admin', 'test1234567') AS tmp
+    WHERE NOT EXISTS (
+      SELECT username FROM users WHERE username='admin'
+    ) LIMIT 1;
   `);
 });
 
-/* LOGIN API */
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
-  console.log("Incoming:", req.body);
+  if (!username || !password) {
+    return res.json({ success: false });
+  }
 
   db.query(
     "SELECT * FROM users WHERE username=? AND password=?",
@@ -57,8 +55,6 @@ app.post('/login', (req, res) => {
         return res.status(500).json({ success: false });
       }
 
-      console.log("DB result:", results);
-
       if (results.length > 0) {
         return res.json({ success: true });
       } else {
@@ -68,16 +64,4 @@ app.post('/login', (req, res) => {
   );
 });
 
-/* DEBUG */
-app.get('/debug', (req, res) => {
-  db.query("SELECT * FROM users", (err, results) => {
-    res.json(results);
-  });
-});
-
-/* TEST */
-app.get('/', (req, res) => {
-  res.send("Backend running with RDS");
-});
-
-app.listen(3000, () => console.log("🚀 Server running on port 3000"));
+app.listen(3000, () => console.log("Server running on port 3000"));
