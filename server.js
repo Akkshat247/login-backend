@@ -11,37 +11,45 @@ app.use(express.json());
 const db = mysql.createConnection({
   host: "login-db-new1.c7oqmwqi0kq2.ca-central-1.rds.amazonaws.com",
   user: "admin",
-  password: "test1234567",
+  password: "test1234567",   // DB password
   database: "loginapp"
 });
 
+/* CONNECT + INIT */
 db.connect(err => {
   if (err) {
-    console.error("DB connection failed:", err);
-  } else {
-    console.log("Connected to RDS");
+    console.error("❌ DB connection failed:", err);
+    return;
   }
+
+  console.log("✅ Connected to RDS");
+
+  /* 🗄️ CREATE TABLE */
+  db.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      username VARCHAR(50),
+      password VARCHAR(50)
+    )
+  `, (err) => {
+    if (err) console.error("Table error:", err);
+    else console.log("✅ Table ready");
+  });
+
+  /* ➕ INSERT DEFAULT USER */
+  db.query(`
+    INSERT INTO users (username, password)
+    SELECT * FROM (SELECT 'admin', '123') AS tmp
+    WHERE NOT EXISTS (
+      SELECT username FROM users WHERE username='admin'
+    ) LIMIT 1;
+  `, (err) => {
+    if (err) console.error("Insert error:", err);
+    else console.log("✅ Default user ready");
+  });
 });
 
-/* 🗄️ CREATE TABLE (runs once) */
-db.query(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50),
-    password VARCHAR(50)
-  )
-`);
-
-/* ➕ INSERT DEFAULT USER (only if not exists) */
-db.query(`
-  INSERT INTO users (username, password)
-  SELECT * FROM (SELECT 'admin', 'test1234567') AS tmp
-  WHERE NOT EXISTS (
-    SELECT username FROM users WHERE username='admin'
-  ) LIMIT 1;
-`);
-
-/* 🔐 LOGIN API (NOW USING DATABASE) */
+/* 🔐 LOGIN API */
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -50,7 +58,7 @@ app.post('/login', (req, res) => {
     [username, password],
     (err, results) => {
       if (err) {
-        console.error(err);
+        console.error("Query error:", err);
         return res.status(500).json({ success: false });
       }
 
@@ -68,4 +76,4 @@ app.get('/', (req, res) => {
   res.send("Backend running with RDS");
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+app.listen(3000, () => console.log("🚀 Server running on port 3000"));
