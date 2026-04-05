@@ -11,7 +11,7 @@ app.use(express.json());
 const db = mysql.createConnection({
   host: "login-db-new1.c7oqmwqi0kq2.ca-central-1.rds.amazonaws.com",
   user: "admin",
-  password: "test1234567",   // DB password
+  password: "test1234567",
   database: "loginapp"
 });
 
@@ -36,16 +36,18 @@ db.connect(err => {
     else console.log("✅ Table ready");
   });
 
-  /* ➕ INSERT DEFAULT USER */
+  /* 🔥 FORCE CLEAN DATA (STEP 3 FIX) */
+  db.query("DELETE FROM users", (err) => {
+    if (err) console.error("Delete error:", err);
+    else console.log("✅ Old data cleared");
+  });
+
   db.query(`
     INSERT INTO users (username, password)
-    SELECT * FROM (SELECT 'admin', '123') AS tmp
-    WHERE NOT EXISTS (
-      SELECT username FROM users WHERE username='admin'
-    ) LIMIT 1;
+    VALUES ('admin', '123')
   `, (err) => {
     if (err) console.error("Insert error:", err);
-    else console.log("✅ Default user ready");
+    else console.log("✅ Fresh user inserted");
   });
 });
 
@@ -69,6 +71,14 @@ app.post('/login', (req, res) => {
       }
     }
   );
+});
+
+/* 🧪 DEBUG ROUTE (VERY USEFUL) */
+app.get('/debug', (req, res) => {
+  db.query("SELECT * FROM users", (err, results) => {
+    if (err) return res.json({ error: err });
+    res.json(results);
+  });
 });
 
 /* 🧪 TEST ROUTE */
