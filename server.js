@@ -24,45 +24,40 @@ db.connect(err => {
 
   console.log("✅ Connected to RDS");
 
-  /* 🗄️ CREATE TABLE */
+  /* CREATE TABLE */
   db.query(`
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
       username VARCHAR(50),
       password VARCHAR(50)
     )
-  `, (err) => {
-    if (err) console.error("Table error:", err);
-    else console.log("✅ Table ready");
-  });
+  `);
 
-  /* 🔥 FORCE CLEAN DATA (STEP 3 FIX) */
-  db.query("DELETE FROM users", (err) => {
-    if (err) console.error("Delete error:", err);
-    else console.log("✅ Old data cleared");
-  });
+  /* CLEAN + INSERT USER */
+  db.query("DELETE FROM users");
 
   db.query(`
     INSERT INTO users (username, password)
     VALUES ('admin', '123')
-  `, (err) => {
-    if (err) console.error("Insert error:", err);
-    else console.log("✅ Fresh user inserted");
-  });
+  `);
 });
 
-/* 🔐 LOGIN API */
+/* LOGIN API */
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
+
+  console.log("Incoming:", req.body);
 
   db.query(
     "SELECT * FROM users WHERE username=? AND password=?",
     [username, password],
     (err, results) => {
       if (err) {
-        console.error("Query error:", err);
+        console.error(err);
         return res.status(500).json({ success: false });
       }
+
+      console.log("DB result:", results);
 
       if (results.length > 0) {
         return res.json({ success: true });
@@ -73,15 +68,14 @@ app.post('/login', (req, res) => {
   );
 });
 
-/* 🧪 DEBUG ROUTE (VERY USEFUL) */
+/* DEBUG */
 app.get('/debug', (req, res) => {
   db.query("SELECT * FROM users", (err, results) => {
-    if (err) return res.json({ error: err });
     res.json(results);
   });
 });
 
-/* 🧪 TEST ROUTE */
+/* TEST */
 app.get('/', (req, res) => {
   res.send("Backend running with RDS");
 });
