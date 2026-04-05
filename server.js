@@ -9,10 +9,10 @@ app.use(express.json());
 
 /* 🔌 RDS CONNECTION */
 const db = mysql.createConnection({
-  host: "login-db.c7oqmwqi0kq2.ca-central-1.rds.amazonaws.com",
+  host: "login-db-new1.c7oqmwqi0kq2.ca-central-1.rds.amazonaws.com",
   user: "admin",
-  password: "akkshat123",
-  database: "mysql"
+  password: "test1234567",
+  database: "loginapp"
 });
 
 db.connect(err => {
